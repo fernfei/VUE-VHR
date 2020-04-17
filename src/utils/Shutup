@@ -1,0 +1,88 @@
+/***
+ * 虎牙自动禁言脚本
+ * @type {HTMLScriptElement}
+ */
+
+
+
+
+function shutUp(el) {
+    let click = document.createEvent("MouseEvents");
+    click.initMouseEvent("click",true,true,document.defaultView,0,0,0,0,0,false,false,false,false,0,null);
+    //触发事件
+    el.dispatchEvent(click);
+    //延迟一秒点击
+    setTimeout(function () {
+        let shutUp = document.createEvent("MouseEvents");
+        shutUp.initMouseEvent("click",true,true,document.defaultView,0,0,0,0,0,false,false,false,false,0,null);
+        document.querySelector(".menu").childNodes[0].childNodes[1].dispatchEvent(shutUp);
+
+        //选中禁用七天时间
+        document.querySelector(".miniDlg").childNodes[1].childNodes[0].childNodes[3].childNodes[3].childNodes[7].click()
+
+        //点击禁用
+        document.querySelector(".dlg-btn").click()
+
+
+    },100)
+    //关闭
+    document.querySelector(".dlg-close").click()
+}
+
+function watch(forbiddenWords){
+    //监听聊天栏
+    let targetNode = document.querySelector(".chat-room__list");
+    //options：监听的属性
+    let options = { childList: true};
+    let words = forbiddenWords.split(",");
+    //回调事件
+    function callback(mutationsList, observer) {
+        let length = targetNode.childNodes.length ;
+        let childNode = targetNode.childNodes[length - 1];
+        let childNodes = childNode.childNodes[0].childNodes;
+        for (let i = 0; i < childNodes.length; i++) {
+            //找出聊天消息标签
+            if (childNodes[i].className==='msg') {
+                //判断聊天内容是否违规
+                for (let j = 0; j < words.length; j++) {
+                    if (childNodes[i].innerText.indexOf(words[j]) != -1) {
+                        shutUp(childNodes[i].previousSibling.previousSibling.previousSibling);
+                    } else {
+                        console.log("无违禁词！！！");
+                    }
+                }
+
+                break;
+            }
+        }
+    }
+    let mutationObserver = new MutationObserver(callback);
+    mutationObserver.observe(targetNode, options);
+}
+
+
+
+
+
+
+
+let flag = 1;
+let forbiddenWords = null;
+window.onkeydown=ev => {
+    if (ev.keyCode === 106) {
+        if (++flag % 2 === 0) {
+            new Promise((resolve, reject) => {
+                if (window.confirm("点击确定即可开启自动禁言脚本")) {
+                    forbiddenWords = window.prompt('请输入直播间禁止输入的词【用英文逗号分隔】')
+                    resolve(forbiddenWords)
+                }
+            }).then(r => {
+                watch(forbiddenWords)
+            });
+        } else {
+            alert("已关闭")
+
+        }
+    }
+}
+
